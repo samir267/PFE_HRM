@@ -3,10 +3,12 @@ import helmet from 'helmet'
 import express, { Application, Request, Response } from 'express'
 import { setupSwagger } from './configs/swagger.config'
 import { loggerMiddleware } from './middlewares/loggerMiddleware'
+import { metricsMiddleware } from './middlewares/metrics.middleware'
 import { KafkaConnector } from './service/kafkaConnector'
 import CircuitBreakerService from './service/CircuitBreaker.service'
 import { sampleRouter } from './routes/smaple.routes'
 import { healthRouter } from './routes/health.routes'
+import metricsRoutes from './routes/metrics.routes'
 import { errorHandler } from './middlewares/errorHandler.middleware'
 import logger from './utils/logger'
 import userRoutes from './routes/user.routes'
@@ -65,7 +67,12 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
     app.use(express.json())
     app.use(helmet())
     app.use(loggerMiddleware)
+    
+    // Add metrics middleware before other middleware
+    app.use(metricsMiddleware)
+    
     app.use('/api', healthRouter)
+    app.use('/api', metricsRoutes) // Add metrics routes
     logger.info('Serveur Express initialisé')
     logger.info('Test INFO log')
     logger.error('Test ERROR log')

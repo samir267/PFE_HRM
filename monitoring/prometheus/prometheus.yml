@@ -1,0 +1,44 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Personal Data App - scrape from host since app runs on host port 4000
+  - job_name: 'personal-data-app'
+    static_configs:
+      - targets: ['host.docker.internal:4000']
+    metrics_path: '/api/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # MongoDB - using mongo-exporter if available, otherwise direct
+  - job_name: 'mongodb'
+    static_configs:
+      - targets: ['mongo:27017']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Node Exporter
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+
+  # Jenkins
+  - job_name: 'jenkins'
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+    metrics_path: '/prometheus'
+    scrape_interval: 30s
+    basic_auth:
+      username: 'admin'
+      password: 'admin'

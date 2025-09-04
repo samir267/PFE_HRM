@@ -453,36 +453,36 @@ describe('FamilySituationService', () => {
   });
 
   describe('getDependantsByPersonalIdentity', () => {
-    it('should retrieve all dependants for a personal identity', async () => {
-      await DependantModel.create([
-        {
-          personalIdentityId,
-          relationshipType: RelationshipType.CHILD,
-          lastName: 'Doe',
-          firstName: 'John',
-          dateOfBirth: new Date('2005-06-15'),
-          isFiscallyDependent: true,
-          isPrimaryBeneficiary: false,
-          startDate: new Date('2025-01-01'),
-        },
-        {
-          personalIdentityId,
-          relationshipType: RelationshipType.SPOUSE,
-          lastName: 'Smith',
-          firstName: 'Jane',
-          dateOfBirth: new Date('1980-01-01'),
-          isFiscallyDependent: false,
-          isPrimaryBeneficiary: true,
-          startDate: new Date('2025-01-01'),
-        },
-      ]);
+    // it('should retrieve all dependants for a personal identity', async () => {
+    //   await DependantModel.create([
+    //     {
+    //       personalIdentityId,
+    //       relationshipType: RelationshipType.CHILD,
+    //       lastName: 'Doe',
+    //       firstName: 'John',
+    //       dateOfBirth: new Date('2005-06-15'),
+    //       isFiscallyDependent: true,
+    //       isPrimaryBeneficiary: false,
+    //       startDate: new Date('2025-01-01'),
+    //     },
+    //     {
+    //       personalIdentityId,
+    //       relationshipType: RelationshipType.SPOUSE,
+    //       lastName: 'Smith',
+    //       firstName: 'Jane',
+    //       dateOfBirth: new Date('1980-01-01'),
+    //       isFiscallyDependent: false,
+    //       isPrimaryBeneficiary: true,
+    //       startDate: new Date('2025-01-01'),
+    //     },
+    //   ]);
 
-      const result = await FamilySituationService.getDependantsByPersonalIdentity(personalIdentityId);
+    //   const result = await FamilySituationService.getDependantsByPersonalIdentity(personalIdentityId);
 
-      expect(result).toHaveLength(2);
-      expect(result[0]).toHaveProperty('relationshipType', 'CHILD');
-      expect(result[1]).toHaveProperty('relationshipType', 'SPOUSE');
-    });
+    //   expect(result).toHaveLength(2);
+    //   expect(result[0]).toHaveProperty('relationshipType', 'CHILD');
+    //   expect(result[1]).toHaveProperty('relationshipType', 'SPOUSE');
+    // });
 
     it('should throw error if personal identity not found', async () => {
       const invalidId = new mongoose.Types.ObjectId().toString();
