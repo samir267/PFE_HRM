@@ -1,0 +1,9 @@
+cd node_modules
+**/node_modules
+setup-microfrontends.sh
+setup-monorepo.sh
+setup-shell.sh
+run.sh
+setup-shared-ui.sh
+create-structure.sh
+lerna-debug.log

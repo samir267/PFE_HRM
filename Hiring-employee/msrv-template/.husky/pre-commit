@@ -1,0 +1,15 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+npx lint-staged
+# tests
+npm run test
+if [ $? -ne 0 ]; then
+  echo "Les tests ont échoué. Annulation du commit."
+  exit 1
+fi
+# Mesure de la couverture des tests unitaires
+npm run coverage
+if [ $? -ne 0 ]; then
+  echo "La mesure de la couverture des tests a échoué. Annulation du commit."
+  exit 1
+fi

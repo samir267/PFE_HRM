@@ -1,0 +1,54 @@
+# Dependency directory
+node_modules
+
+#Package-lock file
+package-lock.json
+src/db/migrations/*
+
+
+# Compiled JavaScript files (if applicable)
+
+*.js.map
+
+# Build/output directories (if used)
+dist/
+build/
+
+# IDE/editor specific files
+.vscode/
+.idea/
+
+# Environment variables
+# .env.dev
+.env.prod
+.env.staging
+# .env.test
+.env
+
+# TypeScript cache
+*.tsbuildinfo
+
+#local scripts
+scripts/
+
+# Testing related files (adjust as needed)
+coverage/
+
+# Common OS generated files
+.DS_Store
+Thumbs.db
+code_summary.txt
+# Temporary/log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Optional: IDE history/cache
+.eslintcache
+
+# Output and report of UT
+
+output/nyc-coverage
+output/**/*
+

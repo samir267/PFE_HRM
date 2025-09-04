@@ -1,0 +1,8 @@
+rules:
+  - id: no-console-log
+    languages: [ typescript]
+    message: "Avoid using console.log for logging, use a proper logging framework."
+    severity: WARNING
+    patterns:
+      - pattern: console.log(...);
+

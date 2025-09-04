@@ -1,0 +1,23 @@
+# Git files
+.git/*
+
+# Environment variables
+.env
+
+# IDE or editor configuration files
+.vscode/
+.idea/
+
+# Test files
+*.test.js
+test/
+spec/
+
+# Build artifacts
+build/
+
+# Temporary files
+tmp/
+
+# Package manager lock files (if regenerated during build)
+package-lock.json

@@ -1,0 +1,27 @@
+{
+  "name": "excellencia-erp",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:finance\" \"npm run dev:hrm\" \"npm run dev:supply-chain\" \"npm run dev:project-management\" \"npm run dev:production\" ",
+    "dev:shell": "cd packages/shell && npm run dev",
+    "dev:finance": "cd packages/finance && npm run dev",
+    "dev:hrm": "cd packages/hrm && npm run dev",
+    "dev:supply-chain": "cd packages/supply-chain && npm run dev",
+    "dev:project-management": "cd packages/project-management && npm run dev",
+    "dev:production": "cd packages/production && npm run dev",
+    "dev:remotes": "concurrently \"npm run dev:finance\" \"npm run dev:hrm\" \"npm run dev:supply-chain\" \"npm run dev:project-management\" \"npm run dev:production\"",
+    "build": "lerna run build",
+    "test": "lerna run test",
+    "bootstrap": "lerna bootstrap"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0",
+    "lerna": "^6.6.1"
+  },
+  "dependencies": {
+    "react-redux": "^9.2.0"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "overrides": [
+    {
+      "parser": "@typescript-eslint/parser",
+      "files": ["src/**/*.ts", "tests/**/*.ts"],
+      "env": {
+        "jest": true,
+        "browser": true,
+        "es2020": true,
+        "node": true
+      },
+      "parserOptions": {
+        "project": "./tsconfig.json",
+        "ecmaFeatures": {}
+      },
+      "extends": [
+        "plugin:@typescript-eslint/recommended",
+        "plugin:import/typescript",
+        "plugin:prettier/recommended",
+        "prettier",
+        "plugin:prettier/recommended"
+      ],
+      "plugins": ["@typescript-eslint", "prettier"],
+      "rules": {
+        "prettier/prettier": "error",
+        "@typescript-eslint/no-unused-vars": "warn",
+        "no-shadow": "off",
+        "@typescript-eslint/dot-notation": "off",
+        "@typescript-eslint/strict-boolean-expressions": [
+          "warn",
+          {
+            "allowString": true,
+            "allowNumber": true,
+            "allowNullableObject": true,
+            "allowNullableBoolean": true,
+            "allowNullableNumber": false,
+            "allowNullableString": true,
+            "allowAny": false
+          }
+        ]
+       /*  "@typescript-eslint/no-misused-promises": [
+          "error",
+          {
+            "checksConditionals": false
+          }
+        ] */
+      }
+    }
+  ],
+  "rules": {}
+}

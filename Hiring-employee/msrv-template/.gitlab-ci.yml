@@ -1,0 +1,263 @@
+
+# # included templates
+# include:
+#   # Gitleaks template
+#   - project: "to-be-continuous/gitleaks"
+#     ref: "2.5.1"
+#     file: "templates/gitlab-ci-gitleaks.yml"
+#   # Node.js template
+#   - project: "to-be-continuous/node"
+#     ref: "3.12.2"
+#     file: "templates/gitlab-ci-node.yml"
+#   # Spectral template
+#   - project: "to-be-continuous/spectral"
+#     ref: "1.1.0"
+#     file: "templates/gitlab-ci-spectral.yml"
+
+# # Global variables
+# variables:
+#   NODE_MANAGER: "npm"  
+#   NODE_TEST_ARGS: "test"
+#   NODE_BUILD_ARGS: "run build --prod"
+#   # NODE_PROJECT_DIR: "src"  # Uncomment if your code is in a subdirectory
+  
+#   NODE_IMAGE: "registry.hub.docker.com/library/node:20-alpine"
+#   NODE_LINT_ENABLED: "true"
+#   NODE_TEST_ENABLED: "true"
+#   NODE_BUILD_ENABLED: "true"
+#   NODE_AUDIT_ENABLED: "true"
+  
+#   # Override npm ci with npm install to resolve package-lock.json mismatch
+#   NODE_INSTALL_COMMAND: "npm install"
+  
+#   # Configure scripts based on your package.json
+#   NODE_TEST_SCRIPT: "test"
+#   NODE_LINT_SCRIPT: "lint"
+#   NODE_BUILD_SCRIPT: "tsc" # TypeScript compilation
+  
+#   # Cache settings
+#   CACHE_PATHS: "node_modules/"
+
+# # Override to allow lint job to fail
+# node-lint:
+#   allow_failure: true
+
+# node-build:
+#   needs:
+#     - lint-dockerfile/hadolint
+
+
+# # Define workflow rules to control when jobs run
+# workflow:
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+#     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#     - if: $CI_COMMIT_TAG
+
+# # Pipeline stages in logical order
+# stages:
+#   - validate    # Initial code validation (linting, security scanning)
+#   - build       # Build application artifacts
+#   - test        # Run tests against the built application
+#   - package     # Build container images
+#   - publish     # Publish artifacts/images to registries
+#   - deploy-dev  # Deploy to development environment
+#   - test-dev    # Run tests in development environment
+#   - deploy-staging # Deploy to staging
+#   - test-staging   # Run tests in staging
+#   - deploy-prod    # Deploy to production
+#   - test-prod      # Verify production deployment
+#   - dast
+#   - update
+# # Define default behaviors for all jobs
+# default:
+#   interruptible: true
+#   cache:
+#     key: ${CI_COMMIT_REF_SLUG}
+#     paths:
+#       - ${CACHE_PATHS}
+
+# # # ---------------------------
+# # # Validation Stage Jobs
+# # # ---------------------------
+
+# lint-dockerfile/hadolint:
+#   stage: validate
+#   before_script:
+#     - docker run -d --name mongodb -p 27017:27017 mongo || true
+#     - wget -O hadolint https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-x86_64
+#     - sudo mv hadolint /usr/local/bin/hadolint
+#     - sudo chmod +x /usr/local/bin/hadolint
+#   script:
+#     - hadolint --config .hadolint.yaml Dockerfile > hadolint-report.json
+#   artifacts:
+#     name: "hadolint-${CI_COMMIT_SHORT_SHA}"
+#     paths:
+#       - hadolint-report.json
+#     expire_in: 1 week
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#   allow_failure: true
+
+# semgrep-scan:
+#   stage: validate
+#   script:
+#     - semgrep logout || true
+#     - export SEMGREP_APP_TOKEN="$SEMGREP_APP_TOKEN"
+#     - semgrep login  
+#     - semgrep ci --no-suppress-errors
+#     - semgrep --config=.semgrep/ --error --json --output semgrep-results.json
+#   artifacts:
+#     paths:
+#       - semgrep-results.json
+#     expire_in: 1 week
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#   allow_failure: true
+# # # ---------------------------
+# # # Build Stage Jobs
+# # # ---------------------------
+
+# # # ---------------------------
+# # # Test Stage Jobs
+# # # ---------------------------
+
+
+# code-coverage:
+#   stage: test
+#   script:
+#     - npm install
+#     - npm run coverage 
+#     - npm run cover:report 
+#   artifacts:
+#     paths:
+#       - coverage/lcov.info
+#     expire_in: 1 week
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#   cat allow_failure: true
+
+# sonarqube-check:
+#   stage: test
+#   dependencies:
+#     - code-coverage
+#   variables:
+#     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+#     GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+#   cache:
+#     key: "${CI_JOB_NAME}"
+#     paths:
+#       - .sonar/cache
+#   script: 
+#     - sonar-scanner
+#   needs:
+#     - code-coverage 
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#   allow_failure: true
+  
+
+# # ---------------------------
+# # Package Stage Jobs
+# # ---------------------------
+
+# docker-build:
+#   stage: package
+#   before_script:
+#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#   script:
+#     - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
+#     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+#   artifacts:
+#     reports:
+#       container_scanning: gl-container-scanning-report.json
+#   needs:
+#     # - code-coverage
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#   allow_failure: true
+
+# container-scan:
+#   stage: package
+#   script:
+#     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+#     - trivy image --format json --output trivy-results.json $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+#   artifacts:
+#     paths:
+#       - trivy-results.json
+#     expire_in: 1 week
+#   needs:
+#     - docker-build
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#   allow_failure: true
+# # ---------------------------
+# # DAST  Jobs
+# # ---------------------------
+
+# dast-job/owasp-zap:
+#   stage: dast
+#   variables:
+#     GIT_STRATEGY: fetch
+#     GIT_CLEAN_FLAGS: none
+#   before_script:
+#     - docker stop  mongodb && docker rm mongodb
+#     - docker compose up -d 
+#   script:
+#     - sleep 2m
+#     - cd && export JAVA_OPTS="-Xms512m -Xmx2048m" 
+#     - ./ZAP_2.16.0/zap.sh -cmd -quickurl $DAST_URL -quickprogress -quickout "$CI_PROJECT_DIR/zap_report.html" 
+#     - echo "$GITLAB_PASSWORD" | sudo -S chown -R gitlab-runner:gitlab-runner /home/gitlab-runner/
+#   after_script:
+#     - echo "ZAP scan finished. Cleaning up..."
+#     - docker compose down 
+  
+#   artifacts:
+#     when: always
+#     paths:
+#       - "$CI_PROJECT_DIR/zap_report.html"
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#   allow_failure: true
+# # ---------------------------
+# # Update msrv from template Stage Jobs
+# # ---------------------------
+
+
+update_from_templates:
+  # stage: update
+  variables:
+    GIT_STRATEGY: fetch
+  before_script:
+    # Start the SSH agent and add the key
+    - eval $(ssh-agent -s)
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-add ~/.ssh/id_rsa
+    # Add GitLab to known hosts 
+    - ssh-keyscan "${CI_SERVER_HOST}" >> ~/.ssh/known_hosts
+  script:
+    # Clone the template repo
+    - rm -rf /tmp/templates
+    - mkdir -p /tmp/templates
+    - git clone --branch develop "git@${CI_SERVER_HOST}:excellencia-erp/msrv-template.git" /tmp/templates/template_msrv
+
+    # Compare and apply changes 
+    - rsync -av --exclude='.git' /tmp/templates/template_msrv/ ./ --delete
+
+    # Check if there are any changes
+    # - git config user.email "daliabess7@gmail.com"
+    # - git config user.name "daliabess7"
+    - git add .
+    - |
+      if ! git diff --cached --quiet; then
+        git commit -m "Update from template on $(date)"
+        git push -f "git@${CI_SERVER_HOST}:${CI_PROJECT_PATH}.git" HEAD:main
+      else
+        echo "No changes from template"
+      fi
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
+  allow_failure: true
